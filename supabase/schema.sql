@@ -1,4 +1,9 @@
-create table rooms (
+-- Run this in Supabase → SQL Editor
+
+-- Drop old rooms table if you ran the previous schema
+drop table if exists rooms;
+
+create table couples (
   id text primary key,
   created_at timestamptz default now(),
   p1_name text not null default 'You',
@@ -7,14 +12,13 @@ create table rooms (
   p2_options text[] not null default '{}',
   p1_theme int not null default 0,
   p2_theme int not null default 1,
+  p2_joined boolean not null default false,
   result jsonb
 );
 
--- Enable realtime updates
-alter publication supabase_realtime add table rooms;
+alter publication supabase_realtime add table couples;
 
--- Allow anyone to read/write (it's a dinner picker, not a bank)
-alter table rooms enable row level security;
-create policy "public read"   on rooms for select using (true);
-create policy "public insert" on rooms for insert with check (true);
-create policy "public update" on rooms for update using (true);
+alter table couples enable row level security;
+create policy "public read"   on couples for select using (true);
+create policy "public insert" on couples for insert with check (true);
+create policy "public update" on couples for update using (true);

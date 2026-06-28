@@ -21,7 +21,7 @@ export const supabase = new Proxy({} as SupabaseClient, {
   },
 })
 
-export type Room = {
+export type Couple = {
   id: string
   p1_name: string
   p2_name: string
@@ -29,5 +29,6 @@ export type Room = {
   p2_options: string[]
   p1_theme: number
   p2_theme: number
+  p2_joined: boolean
   result: { food: string; message: string; isMatch: boolean } | null
 }

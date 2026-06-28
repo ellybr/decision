@@ -1,24 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 function generateId() {
-  return Math.random().toString(36).substring(2, 8).toUpperCase();
+  return Math.random().toString(36).substring(2, 10).toUpperCase();
 }
 
 export default function LandingPage() {
   const router = useRouter();
   const [creating, setCreating] = useState(false);
+  const [joining, setJoining] = useState(false);
+  const [code, setCode] = useState("");
   const [error, setError] = useState("");
+  const [checking, setChecking] = useState(true);
 
-  async function createRoom() {
+  // If this device already has a couple, go straight there
+  useEffect(() => {
+    const id = localStorage.getItem("couple_id");
+    if (id) {
+      router.replace(`/couple/${id}`);
+    } else {
+      setChecking(false);
+    }
+  }, [router]);
+
+  async function createSpace() {
     setCreating(true);
     setError("");
     const id = generateId();
 
-    const { error } = await supabase.from("rooms").insert({
+    const { error } = await supabase.from("couples").insert({
       id,
       p1_name: "You",
       p2_name: "Your partner",
@@ -26,50 +39,90 @@ export default function LandingPage() {
       p2_options: [],
       p1_theme: 0,
       p2_theme: 1,
+      p2_joined: false,
       result: null,
     });
 
     if (error) {
-      setError("Couldn't create a room. Check your Supabase setup.");
+      setError("Couldn't create your space. Check your Supabase setup.");
       setCreating(false);
       return;
     }
 
-    localStorage.setItem(`room_${id}_role`, "p1");
-    router.push(`/room/${id}`);
+    localStorage.setItem("couple_id", id);
+    localStorage.setItem("couple_role", "p1");
+    router.push(`/couple/${id}`);
   }
+
+  async function joinWithCode() {
+    const trimmed = code.trim().toUpperCase();
+    if (!trimmed) return;
+    setJoining(true);
+    setError("");
+
+    const { data, error } = await supabase
+      .from("couples")
+      .select("id")
+      .eq("id", trimmed)
+      .single();
+
+    if (error || !data) {
+      setError("Space not found. Double-check the code.");
+      setJoining(false);
+      return;
+    }
+
+    localStorage.setItem("couple_id", trimmed);
+    localStorage.setItem("couple_role", "p2");
+    await supabase.from("couples").update({ p2_joined: true }).eq("id", trimmed);
+    router.push(`/couple/${trimmed}`);
+  }
+
+  if (checking) return null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-violet-50 flex items-center justify-center px-4">
-      <div className="text-center max-w-md w-full">
+      <div className="text-center max-w-sm w-full">
         <div className="text-6xl mb-4">🍽️</div>
-        <h1 className="text-4xl font-bold text-gray-800 mb-3">Dinner Decider</h1>
-        <p className="text-gray-500 text-lg mb-10">
-          Stop arguing about what to eat.<br />Add your options, we&apos;ll decide.
-        </p>
+        <h1 className="text-4xl font-bold text-gray-800 mb-2">Dinner Decider</h1>
+        <p className="text-gray-500 mb-10">Your permanent dinner-picking space.</p>
 
+        {/* Create */}
         <button
-          onClick={createRoom}
+          onClick={createSpace}
           disabled={creating}
-          className="px-10 py-4 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 text-white text-xl font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full py-4 rounded-2xl bg-gradient-to-r from-pink-500 to-violet-500 text-white text-lg font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed mb-4"
         >
-          {creating ? "Creating…" : "Create a room →"}
+          {creating ? "Setting up…" : "Create our space →"}
         </button>
 
-        {error && <p className="mt-4 text-red-500 text-sm">{error}</p>}
-
-        <div className="mt-12 grid grid-cols-3 gap-4">
-          {[
-            { icon: "🔗", label: "Create a room" },
-            { icon: "📱", label: "Share the link" },
-            { icon: "✨", label: "Get your answer" },
-          ].map((step) => (
-            <div key={step.label} className="text-sm text-gray-400">
-              <div className="text-2xl mb-1">{step.icon}</div>
-              {step.label}
-            </div>
-          ))}
+        <div className="flex items-center gap-3 mb-4">
+          <div className="flex-1 h-px bg-gray-200" />
+          <span className="text-sm text-gray-400">or join one</span>
+          <div className="flex-1 h-px bg-gray-200" />
         </div>
+
+        {/* Join */}
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Enter space code"
+            className="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-700 placeholder-gray-400 outline-none focus:border-violet-400 uppercase tracking-widest"
+            value={code}
+            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            onKeyDown={(e) => e.key === "Enter" && joinWithCode()}
+            maxLength={8}
+          />
+          <button
+            onClick={joinWithCode}
+            disabled={joining || !code.trim()}
+            className="px-5 py-3 rounded-xl bg-violet-500 text-white font-semibold text-sm hover:bg-violet-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {joining ? "…" : "Join"}
+          </button>
+        </div>
+
+        {error && <p className="mt-3 text-red-500 text-sm">{error}</p>}
       </div>
     </div>
   );
