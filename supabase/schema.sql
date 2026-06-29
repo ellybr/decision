@@ -1,24 +1,22 @@
 -- Run this in Supabase → SQL Editor
+-- Cleans up previous tables and sets up Venn
 
--- Drop old rooms table if you ran the previous schema
+drop table if exists couples;
 drop table if exists rooms;
 
-create table couples (
+create table spaces (
   id text primary key,
-  created_at timestamptz default now(),
-  p1_name text not null default 'You',
-  p2_name text not null default 'Your partner',
-  p1_options text[] not null default '{}',
-  p2_options text[] not null default '{}',
-  p1_theme int not null default 0,
-  p2_theme int not null default 1,
-  p2_joined boolean not null default false,
-  result jsonb
+  name text not null default 'Our Space',
+  topic text not null default 'dinner',
+  members jsonb not null default '[]',
+  options jsonb not null default '[]',
+  result jsonb,
+  created_at timestamptz default now()
 );
 
-alter publication supabase_realtime add table couples;
+alter publication supabase_realtime add table spaces;
 
-alter table couples enable row level security;
-create policy "public read"   on couples for select using (true);
-create policy "public insert" on couples for insert with check (true);
-create policy "public update" on couples for update using (true);
+alter table spaces enable row level security;
+create policy "public read"   on spaces for select using (true);
+create policy "public insert" on spaces for insert with check (true);
+create policy "public update" on spaces for update using (true);

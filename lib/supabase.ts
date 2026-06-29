@@ -12,7 +12,6 @@ function getClient(): SupabaseClient {
   return _client
 }
 
-// Proxy defers createClient until first actual use, avoiding build-time env var errors
 export const supabase = new Proxy({} as SupabaseClient, {
   get(_target, prop: string | symbol) {
     const client = getClient()
@@ -21,14 +20,29 @@ export const supabase = new Proxy({} as SupabaseClient, {
   },
 })
 
-export type Couple = {
+export type Member = {
   id: string
-  p1_name: string
-  p2_name: string
-  p1_options: string[]
-  p2_options: string[]
-  p1_theme: number
-  p2_theme: number
-  p2_joined: boolean
-  result: { food: string; message: string; isMatch: boolean } | null
+  name: string
+  color: number
+}
+
+export type VoteOption = {
+  memberId: string
+  text: string
+}
+
+export type DecisionResult = {
+  text: string
+  message: string
+  voters: number
+  total: number
+}
+
+export type Space = {
+  id: string
+  name: string
+  topic: string
+  members: Member[]
+  options: VoteOption[]
+  result: DecisionResult | null
 }
