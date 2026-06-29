@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Dinner Decider — Stop arguing, start eating",
-  description: "A couples app that picks dinner so you don't have to fight about it.",
+  title: "Venn — Find your overlap",
+  description: "Group decision making for couples, friends, and anyone who can't agree. Add your options, Venn decides.",
 };
 
 export default function RootLayout({
