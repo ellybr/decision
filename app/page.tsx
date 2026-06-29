@@ -54,7 +54,7 @@ export default function LandingPage() {
     });
 
     if (error) {
-      setError("Couldn't create your space. Check your Supabase setup.");
+      setError(`Error: ${error.message}`);
       setCreating(false);
       return;
     }
